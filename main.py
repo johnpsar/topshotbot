@@ -9,6 +9,8 @@ from selenium.webdriver.chrome.options import Options
 from fake_useragent import UserAgent
 import time
 
+momentsPerPage = 25
+
 
 def initiate_driver():
     chromeoptions = webdriver.ChromeOptions()
@@ -29,10 +31,11 @@ def initiate_driver():
 
 def create_momentranks_query(players, minPrice, maxPrice, teams, percentageDiscount, series):
     if(percentageDiscount == -1):
-        url = "https://momentranks.com/topshot/marketplace?costBasis&limit=25"
+        url = "https://momentranks.com/topshot/marketplace?costBasis&limit=" + \
+            str(momentsPerPage)
     else:
         url = "https://momentranks.com/topshot/marketplace?costBasis=" + \
-            str(percentageDiscount)+"&limit=25"
+            str(percentageDiscount)+"&limit="+str(momentsPerPage)
     for player in players:
         name = player.split()
         url += "&playerNames="
@@ -60,28 +63,29 @@ def create_momentranks_query(players, minPrice, maxPrice, teams, percentageDisco
     return url
 
 
+# ButtonBase__StyledButton-sc-1qgxh2e-0 gjCpfL Button__StyledButton-ig3kkl-1 yOxki P2PBuyButton__StyledButtonWithMessage-sc-1hj60ii-0 jGdipa
 driver = initiate_driver()
 time.sleep(1)
-momentRanksURL = create_momentranks_query([], 4, 4, [], -1, -1)
+momentRanksURL = create_momentranks_query([], 3, 3, [], -1, -1)
 driver.get(momentRanksURL)
-# select moment from moment ranks 
+# select moment from moment ranks
 try:
-    i=0
+    i = 0
     listing = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.CLASS_NAME, "ListingCard_buy__1QVX8")))
-    # listing.click()
     for listing in driver.find_elements_by_class_name("ListingCard_buy__1QVX8"):
         listing.click()
+        # if i there is a buy button continue otherwise go to next tab
         try:
-            i=i+1
-            # switch to right tab 
-            driver.switch_to.window(driver.window_handles[i])
-            buybutton = WebDriverWait(driver, 2).until(
+            if(i>momentsPerPage-1):
+                driver.close()
+            driver.switch_to.window(driver.window_handles[1])
+            buybutton = WebDriverWait(driver, 1).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "jGdipa")))
             buybutton.click()
             break
         except:
-            time.sleep(2)
+            driver.close()
             driver.switch_to.window(driver.window_handles[0])
             print("next")
 except:
@@ -91,13 +95,30 @@ except:
 
 # trying to buy
 try:
-    buybutton = WebDriverWait(driver, 5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jGdipa")))
+    # buybutton = WebDriverWait(driver, 2).until(
+    #     EC.presence_of_element_located((By.CLASS_NAME, "jGdipa")))
+    buybutton = driver.find_element_by_class_name("jGdipa")
     buybutton.click()
+    # if there is a continue to purchase button for simultaneous buyers
+    try:
+        time.sleep(1)
+        print('fff')
+        # WebDriverWait(driver, 2).until(
+        #     EC.presence_of_element_located((By.CLASS_NAME, "ieOQLc")))
+        buybutton = driver.find_element_by_class_name("jGdipa")
+        buybutton.click()
+    except:
+        print('f')
+
 except:
-    buybutton = WebDriverWait(driver, 5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "ieOQLc")))
-    buybutton.click()
+    # if there is a continue to purchase button
+    try:
+        buybutton = WebDriverWait(driver, 2).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "jGdipa")))
+        buybutton.click()
+    except:
+        print("Something went very wrong")
+        driver.close()
 
 try:
     buybutton = WebDriverWait(driver, 30).until(
