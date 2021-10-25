@@ -1,0 +1,110 @@
+from selenium import webdriver
+from selenium.webdriver.chrome import options
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+import time
+from random import randrange
+
+
+def initiate_driver():
+    chromeoptions = webdriver.ChromeOptions()
+
+    chromeoptions.add_argument('--disable-blink-features=AutomationControlled')
+    chromeoptions.add_argument("--profile-directory=Default")
+    chromeoptions.add_argument(
+        "--user-data-dir=/home/johnpsar/.config/google-chrome")
+    chromeoptions.add_experimental_option(
+        "excludeSwitches", ['enable-automation'])
+    chromeoptions.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+    driver = webdriver.Chrome(options=chromeoptions)
+    driver.implicitly_wait(1)
+    return driver
+
+
+def createUrl(minPrice, maxPrice):
+    baseurl = "https://nbatopshot.com/search"
+    if(minPrice >= 0 and maxPrice >= minPrice):
+        baseurl = baseurl+"?byPrice="+str(minPrice)+"-"+str(maxPrice)
+    return baseurl
+
+
+def findMoment(driver, url):
+    while 1 > 0:
+        try:
+            driver.get(url)
+            moment = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "kAMKVp")))
+            return moment
+        except:
+            print("did not find any moments.Trying again in 5 seconds")
+            time.sleep(randrange(6))
+
+
+def selectAndBuy(driver, url):
+    try:
+        selectAndBuyButton = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "fDbbjs")))
+        print("Buy button found")
+        selectAndBuyButton.click()
+    except:
+        print("poop")
+
+# price is in format $5.00
+# first split in characters, then keep only 5 then convert to int
+
+
+def getPrice(driver):
+    price_text = WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "sBCOF")))
+    price_chars = list(price_text.text)
+    price_string = ""
+    startAppending = 0
+    for char in price_chars:
+        if(char == "."):
+            break
+        if (startAppending == 1):
+            price_string += char
+        if(char == "$"):
+            startAppending = 1
+    price = int(price_string)
+    print("price is", price)
+    return price
+
+
+def chooseFromPopup(driver, url, maxPrice):
+    try:
+        popup = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "HHeAH")))
+        print("Pop up found")
+        price = getPrice(driver)
+        if (price <= maxPrice):
+            #choose circular button from popup
+            selectButton = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "hnOFYU")))
+            selectButton.click()
+            #press buy button bottom right
+            buyButton=WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
+            print(buyButton.text)
+            buyButton.click()
+
+    except:
+        print("shit")
+
+
+def main(minPrice, maxPrice):
+    driver = initiate_driver()
+    url = createUrl(minPrice, maxPrice)
+    moment = findMoment(driver, url)
+    print("Found Moment!")
+    moment.click()
+
+    selectAndBuy(driver, url)
+    chooseFromPopup(driver, url, maxPrice)
+
+
+main(0, 4)
