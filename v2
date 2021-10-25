@@ -40,8 +40,8 @@ def findMoment(driver, url):
                 EC.presence_of_element_located((By.CLASS_NAME, "kAMKVp")))
             return moment
         except:
-            print("did not find any moments.Trying again in 5 seconds")
-            time.sleep(randrange(6))
+            print("did not find any moments.Trying again in 3 seconds")
+            time.sleep(randrange(3))
 
 
 def selectAndBuy(driver, url):
@@ -82,18 +82,48 @@ def chooseFromPopup(driver, url, maxPrice):
         print("Pop up found")
         price = getPrice(driver)
         if (price <= maxPrice):
-            #choose circular button from popup
+            # choose circular button from popup
             selectButton = WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "hnOFYU")))
+            print("selected cheapest option")
             selectButton.click()
-            #press buy button bottom right
-            buyButton=WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
-            print(buyButton.text)
+            # press buy button bottom right
+            buyButton = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
+            print("purchase button pressed")
             buyButton.click()
+
+            # in case of another buyer need to press button twice
+            try:
+                time.sleep(0.1)#this might be able to go
+                buyButton2 = WebDriverWait(driver, 3).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
+                if(buyButton.text != buyButton2.text):
+                    print("continue purchase button pressed")
+                    buyButton2.click()
+                else:
+                    print("no continue purchase button appeared")
+            except:
+                print("gucci")
+            continueToPurchaseButton = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "iGmLag")))
+            continueToPurchaseButton.click()
+        else:
+            print("price is not right")
+            driver.quit()
 
     except:
         print("shit")
+        driver.quit()
+
+
+def buyWithDapper(driver):
+    buyWithDapperBalanceButton = WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "css-wae9sn")))
+    buyWithDapperBalanceButton.click()
+    print("EASY CLAPPPP LETS GO")
+    time.sleep(10)
+    driver.quit()
 
 
 def main(minPrice, maxPrice):
@@ -101,10 +131,11 @@ def main(minPrice, maxPrice):
     url = createUrl(minPrice, maxPrice)
     moment = findMoment(driver, url)
     print("Found Moment!")
+    # time.sleep(50)
     moment.click()
-
     selectAndBuy(driver, url)
     chooseFromPopup(driver, url, maxPrice)
+    buyWithDapper(driver)
 
 
-main(0, 4)
+main(0, 3)
