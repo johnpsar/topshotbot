@@ -25,10 +25,38 @@ def initiate_driver():
     return driver
 
 
-def createUrl(minPrice, maxPrice):
+def createUrl(minPrice, maxPrice, players, teams,series):
     baseurl = "https://nbatopshot.com/search"
+    print("mpika")
+    for i in range(len(players)):
+        if(i == 0):
+            baseurl += "?byPlayers="
+            baseurl += players[i]
+        else:
+            baseurl += ","+players[i]
+    for i in range(len(teams)):
+        if(i == 0):
+            if(len(players) == 0):
+                baseurl += "?"
+            else:
+                baseurl += "&"
+            baseurl += "byTeams="
+            baseurl += teams[i]
+        else:
+            baseurl += ","+teams[i]
+    for i in range(len(series)):
+        if(i == 0):
+            if(len(players) == 0 and len(teams)==0):
+                baseurl += "?"
+            else:
+                baseurl += "&"
+            baseurl += "bySeries="
+            baseurl += series[i]
+        else:
+            baseurl += ","+series[i]
     if(minPrice >= 0 and maxPrice >= minPrice):
-        baseurl = baseurl+"?byPrice="+str(minPrice)+"-"+str(maxPrice)
+        baseurl = baseurl+"&byPrice="+str(minPrice)+"-"+str(maxPrice)
+    print(baseurl)
     return baseurl
 
 
@@ -41,7 +69,7 @@ def findMoment(driver, url):
             return moment
         except:
             print("did not find any moments.Trying again in 3 seconds")
-            time.sleep(randrange(3))
+            time.sleep(randrange(2))
 
 
 def selectAndBuy(driver, url):
@@ -89,20 +117,18 @@ def chooseFromPopup(driver, url, maxPrice):
             selectButton.click()
             # press buy button bottom right
             buyButton = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
+                EC.presence_of_element_located((By.XPATH, "/html/body/div[6]/div/div/div/div[5]/div[2]/div/button")))
             print("purchase button pressed")
             buyButton.click()
-
             # in case of another buyer need to press button twice
             try:
-                time.sleep(0.1)#this might be able to go
-                buyButton2 = WebDriverWait(driver, 3).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "ejegKo")))
-                if(buyButton.text != buyButton2.text):
-                    print("continue purchase button pressed")
-                    buyButton2.click()
-                else:
-                    print("no continue purchase button appeared")
+                buyButton2 = WebDriverWait(driver, 4).until(
+                    EC.presence_of_element_located((By.XPATH, "//*[text()='Continue purchase']")))
+                buyButton2.click()
+            except:
+                print("didnt need to press buy button twice")
+            try:
+                print("")
             except:
                 print("gucci")
             continueToPurchaseButton = WebDriverWait(driver, 30).until(
@@ -122,20 +148,48 @@ def buyWithDapper(driver):
         EC.presence_of_element_located((By.CLASS_NAME, "css-wae9sn")))
     buyWithDapperBalanceButton.click()
     print("EASY CLAPPPP LETS GO")
-    time.sleep(10)
+    time.sleep(2)
     driver.quit()
 
 
-def main(minPrice, maxPrice):
+def main(minPrice, maxPrice, players, teams,series):
     driver = initiate_driver()
-    url = createUrl(minPrice, maxPrice)
+    url = createUrl(minPrice, maxPrice, players, teams,series)
     moment = findMoment(driver, url)
     print("Found Moment!")
-    # time.sleep(50)
+    # time.sleep(100)  #uncomment this first time
     moment.click()
     selectAndBuy(driver, url)
     chooseFromPopup(driver, url, maxPrice)
     buyWithDapper(driver)
 
 
-main(0, 3)
+cardsBought = 0
+errors = 0
+try:
+    while(cardsBought <= 4):#change this number to the # of cards you want to buy
+        print("Amount of tries : ", cardsBought+errors)
+        try:
+            main(0, 3, ["202692", "203932"], ["1611661330", "1610612738"],["series1","summer2021"])
+            cardsBought += 1
+            time.sleep(50)
+        except:
+            print("Couldn't buy card")
+            errors += 1
+except KeyboardInterrupt:
+    print("done")
+
+
+
+# arguments are
+# 1)min price (-1 if empty)
+# 2)max price   (-1 if empty)
+# 3)array of players ([] if empty)
+# 4)array of teams ([] if empty)
+# 5)array of series([] if empty)
+
+# ex   main(0, 3, ["202692", "203932"], ["1611661330", "1610612738"],["series1","summer2021"])
+#ex empty main(-1,-1,[],[],[])
+
+
+#first time uncomment line 160 time.sleep(100) to have time to login. Then recomment
